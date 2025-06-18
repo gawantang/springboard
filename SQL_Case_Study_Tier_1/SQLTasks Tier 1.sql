@@ -190,20 +190,46 @@ Draft:
 
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
-SELECT name, firstname, surname, cost,
-    CASE
-        WHEN firstname = 'GUEST' THEN (guestcost * slots)
-        ELSE (membercost * slots)
-    END AS cost
-FROM Bookings
-WHERE starttime BETWEEN '2012-09-14 00:00:00' AND '2012-09-14 23:59:59' 
-    AND facid IN
-        (SELECT name, membercost, guestcost, facid
-        FROM Facilities
-        WHERE facid IN
-            (SELECT memid, starttime, slots
-            FROM Bookings))
-HAVING cost > 30;
+
+Attempt 1:
+    SELECT name, firstname, surname,
+        CASE
+            WHEN firstname = 'GUEST' THEN (guestcost * slots)
+            ELSE (membercost * slots)
+        END AS cost
+    FROM Bookings
+    WHERE starttime BETWEEN '2012-09-14 00:00:00' AND '2012-09-14 23:59:59' 
+        AND facid IN
+            (SELECT name, membercost, guestcost, facid
+            FROM Facilities
+            WHERE facid IN
+                (SELECT memid, starttime, slots
+                FROM Bookings))
+    HAVING cost > 30;
+
+Attempt 2: still running into error code 403
+    # the following query will run fine if the WHERE clause is removed
+    # the WHERE clause works fine if it's not combined with the entire query
+    # possibly a permissions issue that prevents subqueries in combination with WHERE and HAVING?
+
+    SELECT 
+        (SELECT name 
+        FROM Facilities 
+        WHERE facid = b.facid) AS name,
+        (SELECT firstname 
+        FROM Members 
+        WHERE memid = b.memid) AS firstname,
+        (SELECT surname 
+        FROM Members 
+        WHERE memid = b.memid) AS surname,
+        CASE
+            WHEN (SELECT firstname FROM Members WHERE memid = b.memid) = 'GUEST' 
+            THEN (SELECT guestcost FROM Facilities WHERE facid = b.facid) * b.slots
+            ELSE (SELECT membercost FROM Facilities WHERE facid = b.facid) * b.slots
+        END AS cost
+    FROM Bookings b
+    WHERE b.starttime BETWEEN '2012-09-14 00:00:00' AND '2012-09-14 23:59:59'
+    HAVING cost > 30;
 
 
 /* PART 2: SQLite
