@@ -152,7 +152,7 @@ the guest user's ID is always 0. Include in your output the name of the
 facility, the name of the member formatted as a single column, and the cost.
 Order by descending cost, and do not use any subqueries. */
 
-Draft:
+Drafts:
     SELECT *
     FROM Bookings b
     JOIN Facilities f
@@ -174,7 +174,7 @@ Draft:
     LEFT JOIN Members as m USING (memid) 
     WHERE b.starttime BETWEEN '2012-09-14 00:00:00' AND '2012-09-14 23:59:59';
     
-    
+final:
     SELECT name, firstname, surname,
         CASE
             WHEN firstname = 'GUEST' THEN (guestcost * slots)
